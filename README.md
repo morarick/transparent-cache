@@ -15,7 +15,7 @@ Generally speaking, this is a kind of resumed approach. In order to fix the test
 
 ## Diving into details :diving_mask:
 ### Expiring Results :hourglass:
-The requirement talks about fix the test by adding the missing feature. Caching results with the existing __TransparentCache__ implementation can't be done because there isn't any struct, variable, or something that we can use to map a price with the expired time. So, as a ___cahedAt___ variable is needed in order to know when each price has been added, I decided to create a Price struct and put that property over there. This __Price__ struct now will give us more flexibility because we can store more properties like ___cachedAt__, ___modifiedAt___, ___type___, etc... This will scale better. 
+The requirement talks about fix the test by adding the missing feature. Caching results with the existing __TransparentCache__ implementation can't be done because there isn't any struct, variable, or something that we can use to map a price with the expired time. So, as a ___cachedAt___ variable is needed in order to know when each price has been added, I decided to create a Price struct and put that property over there. This __Price__ struct now will give us more flexibility because we can store more properties like ___cachedAt__, ___modifiedAt___, ___type___, etc... This will scale better. 
 <br />
 
 To avoid change all tests by modifying the ___float64___ price references to the Price structure because only the price value is being tested, I decide to keep that as it is and only uses the __Price__ reference inside the [cache.go](https://github.com/morarick/transparent-cache/blob/main/cache.go) file. <br />
