@@ -1,10 +1,10 @@
 package sample1
 
 import (
-	"testing"
-	"time"
 	"fmt"
 	"sort"
+	"testing"
+	"time"
 )
 
 // mockResult has the float64 and err to return
@@ -20,8 +20,7 @@ type mockPriceService struct {
 }
 
 func (m *mockPriceService) GetPriceFor(itemCode string) (float64, error) {
-
-	m.numCalls++            // increase the number of calls
+	m.incrementNumCalls()   // increase the number of calls
 	time.Sleep(m.callDelay) // sleep to simulate expensive call
 
 	result, ok := m.mockResults[itemCode]
@@ -33,6 +32,12 @@ func (m *mockPriceService) GetPriceFor(itemCode string) (float64, error) {
 
 func (m *mockPriceService) getNumCalls() int {
 	return m.numCalls
+}
+
+func (m *mockPriceService) incrementNumCalls() {
+	mutex.Lock()
+	m.numCalls++
+	mutex.Unlock()
 }
 
 func getPriceWithNoErr(t *testing.T, cache *TransparentCache, itemCode string) float64 {
