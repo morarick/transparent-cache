@@ -27,6 +27,8 @@ type TransparentCache struct {
 	prices             map[string]price
 }
 
+// NewTransparentCache is the implementation for PriceService interface
+// It creates a new Transparent Cache based on the arguments
 func NewTransparentCache(actualPriceService PriceService, maxAge time.Duration) *TransparentCache {
 	return &TransparentCache{
 		actualPriceService: actualPriceService,
