@@ -12,6 +12,12 @@ type price struct {
 	cachedAt time.Time
 }
 
+// priceError is an abstraction for the price and error
+type priceError struct {
+	price price
+	err   error
+}
+
 // PriceService is a service that we can use to get prices for the items
 // Calls to this service are expensive (they take time)
 type PriceService interface {
@@ -61,6 +67,25 @@ func (c *TransparentCache) GetPricesFor(itemCodes ...string) ([]float64, error) 
 			return []float64{}, err
 		}
 		results = append(results, price)
+	}
+	return results, nil
+}
+
+// publishPrice publish the retrieved price to the queue (channel)
+func publishPrice(GetPriceFor func(string) (float64, error), itemCode string, ch chan priceError) {
+	value, err := GetPriceFor(itemCode)
+	ch <- priceError{price: price{value: value}, err: err}
+}
+
+// consumePrices consumes the queued prices from the given channel and returns them into an float64 slice
+func consumePrices(ch chan priceError) ([]float64, error) {
+	var results []float64
+	for i := cap(ch); i > 0; i-- {
+		priceError := <-ch
+		if priceError.err != nil {
+			return results, priceError.err
+		}
+		results = append(results, priceError.price.value)
 	}
 	return results, nil
 }
