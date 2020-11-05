@@ -48,14 +48,16 @@ func NewTransparentCache(actualPriceService PriceService, maxAge time.Duration) 
 
 // GetPriceFor gets the price for the item, either from the cache or the actual service if it was not cached or too old
 func (c *TransparentCache) GetPriceFor(itemCode string) (float64, error) {
-	if price, ok := c.prices[itemCode]; ok && time.Since(price.cachedAt) < c.maxAge {
+	if price, ok := loadPriceSync(c.prices, itemCode); ok && time.Since(price.cachedAt) < c.maxAge {
 		return price.value, nil
 	}
+
 	value, err := c.actualPriceService.GetPriceFor(itemCode)
 	if err != nil {
 		return 0, fmt.Errorf("getting price from service : %v", err.Error())
 	}
-	c.prices[itemCode] = price{value: value, cachedAt: time.Now()}
+
+	storePriceSync(c.prices, itemCode, price{value: value, cachedAt: time.Now()})
 	return value, nil
 }
 
