@@ -175,3 +175,19 @@ func TestGetPricesFor_ParallelizeCalls(t *testing.T) {
 		t.Error("calls took too long, expected them to take a bit over one second")
 	}
 }
+
+// Check that cache returns an error if external service returns an error in a concurrent context
+func TestGetPricesFor_ParallelizeCallsReturnsError(t *testing.T) {
+	mockService := &mockPriceService{
+		callDelay: time.Second, // each call to external service takes one full second
+		mockResults: map[string]mockResult{
+			"p1": {price: 5, err: fmt.Errorf("some error")},
+			"p2": {price: 7, err: nil},
+		},
+	}
+	cache := NewTransparentCache(mockService, time.Minute)
+	_, err := cache.GetPricesFor("p1", "p2")
+	if err == nil {
+		t.Errorf("getting price from service")
+	}
+}
