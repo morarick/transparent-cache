@@ -2,6 +2,7 @@ package sample1
 
 import (
 	"fmt"
+	"sync"
 	"time"
 )
 
@@ -33,6 +34,8 @@ type TransparentCache struct {
 	prices             map[string]price
 }
 
+var mutex sync.RWMutex
+
 // NewTransparentCache is the implementation for PriceService interface
 // It creates a new Transparent Cache based on the arguments
 func NewTransparentCache(actualPriceService PriceService, maxAge time.Duration) *TransparentCache {
@@ -54,6 +57,21 @@ func (c *TransparentCache) GetPriceFor(itemCode string) (float64, error) {
 	}
 	c.prices[itemCode] = price{value: value, cachedAt: time.Now()}
 	return value, nil
+}
+
+// loadPriceSync method for load/get a price given an item code with a thread-safe mechanism
+func loadPriceSync(prices map[string]price, itemCode string) (price, bool) {
+	mutex.RLock()
+	defer mutex.RUnlock()
+	p, ok := prices[itemCode]
+	return p, ok
+}
+
+// storePriceSync method for store/set a price given an item code and the target price with a thread-safe mechanism
+func storePriceSync(prices map[string]price, itemCode string, p price) {
+	mutex.Lock()
+	defer mutex.Unlock()
+	prices[itemCode] = p
 }
 
 // GetPricesFor gets the prices for several items at once, some might be found in the cache, others might not
