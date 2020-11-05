@@ -191,3 +191,32 @@ func TestGetPricesFor_ParallelizeCallsReturnsError(t *testing.T) {
 		t.Errorf("getting price from service")
 	}
 }
+
+// Check that cache parallelize service should takes the same as one when getting a lot different values at once
+func TestGetPricesFor_ParallelizeALotCallsShouldTakesTheSameAsOne(t *testing.T) {
+	mockService := &mockPriceService{
+		callDelay: time.Second, // each call to external service takes one full second
+		mockResults: map[string]mockResult{
+			"p1":  {price: 1, err: nil},
+			"p2":  {price: 2, err: nil},
+			"p3":  {price: 3, err: nil},
+			"p4":  {price: 4, err: nil},
+			"p5":  {price: 5, err: nil},
+			"p6":  {price: 6, err: nil},
+			"p7":  {price: 7, err: nil},
+			"p8":  {price: 8, err: nil},
+			"p9":  {price: 9, err: nil},
+			"p10": {price: 10, err: nil},
+		},
+	}
+	cache := NewTransparentCache(mockService, time.Minute)
+	start := time.Now()
+	assertFloats(t,
+		[]float64{1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
+		getPricesWithNoErr(t, cache, "p1", "p2", "p3", "p4", "p5", "p6", "p7", "p8", "p9", "p10"),
+		"wrong price returned")
+	elapsedTime := time.Since(start)
+	if elapsedTime > (1200 * time.Millisecond) {
+		t.Error("calls took too long, expected them to take a bit over one second")
+	}
+}
